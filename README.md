@@ -5,9 +5,7 @@
 		<img src="https://johng.io/badges/category/Other.svg" alt="Project category" title="Project category">
 		<img src="https://img.shields.io/github/languages/top/caret-collective/issue-field-workflows.svg" alt="Language" title="Language">
 		<img src="https://img.shields.io/github/repo-size/caret-collective/issue-field-workflows.svg" alt="Repository size" title="Repository size">
-		<a href="LICENSE">
-		<img src="https://img.shields.io/github/license/caret-collective/issue-field-workflows.svg" alt="Project license" title="Project license"/>
-		</a>
+		<a href="LICENSE"><img src="https://img.shields.io/github/license/caret-collective/issue-field-workflows.svg" alt="Project license" title="Project license"/></a>
 		<a href="https://conventionalcommits.org"><img src="https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white" alt="Conventional Commits" title="Conventional Commits"/></a>
 	</p>
 	<p class="projectDesc">
@@ -15,6 +13,9 @@
 	</p>
 	<br/>
 </div>
+
+> [!NOTE]
+> These workflows are specific to the [Caret Collective](https://github.com/caret-collective) organization and will require some customization if you want to use them in your own org.
 
 ## 👋 About
 
