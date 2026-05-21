@@ -1,0 +1,11 @@
+name: 🗑️ Clear 'Stage' field on issue close
+run-name: "🗑️ Clear stage for closed issue: ${{ github.event.issue.title }}"
+permissions:
+  issues: write
+on:
+  issues:
+    types: [closed]
+jobs:
+  clear-stage-field-on-close:
+    name: 🗑️ Clear 'Stage' field on issue close
+    uses: caret-collective/issue-field-workflows/.github/workflows/clear-stage-field.yml@main

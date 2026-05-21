@@ -1,0 +1,21 @@
+name: 🗑️ Clear 'Stage' field
+on:
+  workflow_call:
+env:
+  # Update this when GitHub releases a new stable API version.
+  # Latest version: https://docs.github.com/en/rest/about-the-rest-api/api-versions
+  GH_API_VERSION: "2026-03-10"
+  STAGE_ISSUE_FIELD_ID: "42327683"
+jobs:
+  clear-stage-field:
+    name: 🗑️ Clear 'Stage' field
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl -fsS -L \
+            -X DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "X-GitHub-Api-Version: ${GH_API_VERSION}" \
+            "${{ github.api_url }}/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/issue-field-values/${STAGE_ISSUE_FIELD_ID}" \
+            || (echo 'Is this a private repo?'; exit 1)
