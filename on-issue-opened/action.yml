@@ -1,0 +1,42 @@
+name: On Issue Opened
+description: Adds a newly opened issue to a project.
+inputs:
+  project_number:
+    description: Number of the project to add the issue to.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Debug inputs
+      if: runner.debug == '1'
+      shell: bash
+      env:
+        PROJECT_NUMBER: ${{ inputs.project_number }}
+      run: |
+        echo "project_number: $PROJECT_NUMBER"
+        echo "org: ${{ github.repository_owner }}"
+        echo "issue_url: ${{ github.event.issue.html_url }}"
+        if [ "$GH_TOKEN" = "$GITHUB_TOKEN" ]; then
+          echo "project_token: not configured (using GITHUB_TOKEN fallback — add ORG_PROJECT_TOKEN secret)"
+        else
+          echo "project_token: configured"
+        fi
+
+    - name: 'Issue opened → Add to project ${{ inputs.project_number }}'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ env.GH_TOKEN || github.token }}
+        ORG: ${{ github.repository_owner }}
+        PROJECT_NUMBER: ${{ inputs.project_number }}
+        ISSUE_URL: ${{ github.event.issue.html_url }}
+      run: |
+        if [ -z "$PROJECT_NUMBER" ]; then
+          echo "::notice::project_number is not set. Skipping."
+          exit 0
+        fi
+
+        gh project item-add "$PROJECT_NUMBER" --owner "$ORG" --url "$ISSUE_URL" \
+          || {
+            echo "::error::Request failed. Ensure GH_TOKEN is a classic PAT with 'project' scope. See the troubleshooting section in the README for help."
+            exit 1
+          }
