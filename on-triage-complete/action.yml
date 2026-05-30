@@ -1,0 +1,99 @@
+name: On Triage Complete
+description: >-
+  Sets the Stage field to ready when both the Effort and Priority fields are set.
+  Uses the issue_field_values snapshot in the field_added event payload to check
+  the state of both fields without an extra API call.
+  Skips if Stage already has a value to avoid downgrading an in-progress issue.
+inputs:
+  effort_field_id:
+    description: Numeric ID of the Effort issue field.
+    required: true
+  priority_field_id:
+    description: Numeric ID of the Priority issue field.
+    required: true
+  stage_field_id:
+    description: Numeric ID of the Stage issue field.
+    required: true
+  stage_ready_value:
+    description: Option name for the ready stage.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Debug inputs
+      if: runner.debug == '1'
+      shell: bash
+      env:
+        EFFORT_FIELD_ID: ${{ inputs.effort_field_id }}
+        PRIORITY_FIELD_ID: ${{ inputs.priority_field_id }}
+        STAGE_FIELD_ID: ${{ inputs.stage_field_id }}
+        VALUE: ${{ inputs.stage_ready_value }}
+        FIELD_VALUES: ${{ toJSON(github.event.issue.issue_field_values) }}
+      run: |
+        echo "effort_field_id: $EFFORT_FIELD_ID"
+        echo "priority_field_id: $PRIORITY_FIELD_ID"
+        echo "stage_field_id: $STAGE_FIELD_ID"
+        echo "stage_ready_value: $VALUE"
+        echo "repository: ${{ github.repository }}"
+        echo "issue_number: ${{ github.event.issue.number }}"
+        echo "changed_field_id: ${{ github.event.issue_field.id }}"
+        echo "changed_field_name: ${{ github.event.issue_field.name }}"
+        echo "issue_field_values_count: $(echo "${FIELD_VALUES:-null}" | jq '(. // []) | length')"
+
+    - name: 'Triage complete → Set Stage to ${{ inputs.stage_ready_value }}'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ env.GH_TOKEN || github.token }}
+        GH_API_VERSION: ${{ env.GH_API_VERSION || '2026-03-10' }}
+        REPO: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        FIELD_VALUES: ${{ toJSON(github.event.issue.issue_field_values) }}
+        EFFORT_FIELD_ID: ${{ inputs.effort_field_id }}
+        PRIORITY_FIELD_ID: ${{ inputs.priority_field_id }}
+        STAGE_FIELD_ID: ${{ inputs.stage_field_id }}
+        VALUE: ${{ inputs.stage_ready_value }}
+      run: |
+        if [ -z "$STAGE_FIELD_ID" ] || [ -z "$EFFORT_FIELD_ID" ] || [ -z "$PRIORITY_FIELD_ID" ]; then
+          echo "::notice::One or more required field IDs are not set. Skipping."
+          exit 0
+        fi
+
+        # Only set Stage to ready if it has no current value. This prevents
+        # downgrading an issue that is already in progress back to ready.
+        CURRENT_STAGE=$(echo "${FIELD_VALUES:-null}" | jq -r \
+          --argjson id "$STAGE_FIELD_ID" \
+          '(. // []) | .[] | select(.issue_field_id == $id) | .single_select_option.name' \
+          2>/dev/null || echo "")
+
+        if [ -n "$CURRENT_STAGE" ]; then
+          echo "Stage is already set to '$CURRENT_STAGE'. Skipping."
+          exit 0
+        fi
+
+        # Check that both Effort and Priority are present in the snapshot.
+        # Fields that have been cleared are absent from issue_field_values.
+        EFFORT_SET=$(echo "${FIELD_VALUES:-null}" | jq \
+          --argjson id "$EFFORT_FIELD_ID" \
+          '(. // []) | any(.[]; .issue_field_id == $id)')
+        PRIORITY_SET=$(echo "${FIELD_VALUES:-null}" | jq \
+          --argjson id "$PRIORITY_FIELD_ID" \
+          '(. // []) | any(.[]; .issue_field_id == $id)')
+
+        if [ "$EFFORT_SET" != "true" ] || [ "$PRIORITY_SET" != "true" ]; then
+          echo "Triage incomplete (Effort set: $EFFORT_SET, Priority set: $PRIORITY_SET). Skipping."
+          exit 0
+        fi
+
+        BODY=$(jq -n \
+          --argjson field_id "$STAGE_FIELD_ID" \
+          --arg value "$VALUE" \
+          '{"issue_field_values":[{"field_id":$field_id,"value":$value}]}')
+
+        gh api -X POST \
+          -H "X-GitHub-Api-Version: $GH_API_VERSION" \
+          "/repos/$REPO/issues/$ISSUE_NUMBER/issue-field-values" \
+          --input - <<< "$BODY" \
+          || {
+            echo "::error::Request failed. See the troubleshooting section in the README for help."
+            exit 1
+          }
