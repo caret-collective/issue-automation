@@ -1,0 +1,84 @@
+name: 🤖 Issue Automations
+on:
+  workflow_call:
+    secrets:
+      project_token:
+        description: >-
+          Token with project write scope, required for adding issues to projects.
+          GITHUB_TOKEN does not have this scope. Use a PAT or GitHub App token.
+          See the README for setup instructions.
+        required: false
+# Update this when GitHub releases a new stable API version.
+# See: https://docs.github.com/en/rest/about-the-rest-api/api-versions
+env:
+  GH_API_VERSION: '2026-03-10'
+jobs:
+  # issues: assigned → set Stage to in progress
+  on-issue-assigned:
+    name: "Issue assigned → Set Stage to '${{ vars.STAGE_IN_PROGRESS_VALUE }}'"
+    if: github.event.action == 'assigned'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: caret-collective/issue-automation/on-issue-assigned@main
+        with:
+          stage_field_id: ${{ vars.STAGE_FIELD_ID }}
+          stage_in_progress_value: ${{ vars.STAGE_IN_PROGRESS_VALUE }}
+
+  # issues: closed → clear Stage
+  on-issue-closed:
+    name: Issue closed → Clear Stage
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: caret-collective/issue-automation/on-issue-closed@main
+        with:
+          stage_field_id: ${{ vars.STAGE_FIELD_ID }}
+
+  # issues: unassigned → set Stage to ready if no assignees remain
+  on-issue-unassigned:
+    name: "Issue unassigned → Set Stage to '${{ vars.STAGE_READY_VALUE }}'"
+    if: github.event.action == 'unassigned'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: caret-collective/issue-automation/on-issue-unassigned@main
+        with:
+          stage_field_id: ${{ vars.STAGE_FIELD_ID }}
+          stage_ready_value: ${{ vars.STAGE_READY_VALUE }}
+
+  # issues: opened → add to project
+  on-issue-opened:
+    name: Issue opened → Add to project
+    if: github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    env:
+      # Falls back to GITHUB_TOKEN if project_token is not provided, which will
+      # fail with a permission error. See the README for setup instructions.
+      GH_TOKEN: ${{ secrets.project_token || github.token }}
+    steps:
+      - uses: caret-collective/issue-automation/on-issue-opened@main
+        with:
+          project_number: ${{ vars.PROJECT_NUMBER }}
+
+  # issues: field_added (Effort or Priority) → set Stage to ready if both are now set
+  on-triage-complete:
+    name: "Triage complete → Set Stage to '${{ vars.STAGE_READY_VALUE }}'"
+    if: >-
+      github.event.action == 'field_added' &&
+      (github.event.issue_field.id == fromJSON(vars.EFFORT_FIELD_ID || '0') ||
+       github.event.issue_field.id == fromJSON(vars.PRIORITY_FIELD_ID || '0'))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: caret-collective/issue-automation/on-triage-complete@main
+        with:
+          effort_field_id: ${{ vars.EFFORT_FIELD_ID }}
+          priority_field_id: ${{ vars.PRIORITY_FIELD_ID }}
+          stage_field_id: ${{ vars.STAGE_FIELD_ID }}
+          stage_ready_value: ${{ vars.STAGE_READY_VALUE }}
