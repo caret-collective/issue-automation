@@ -18,15 +18,25 @@
 
 A set of reusable GitHub Actions workflows and composite actions that keep org-level issue fields and project membership in sync as issues move through their lifecycle. GitHub's built-in project automations cannot update org-level issue fields or add issues to projects across all repos in an org at once, so this repo fills that gap.
 
-> [!NOTE]
-> Syncing the `Stage` field to `Blocked` when an issue dependency is created or removed is not currently supported because the `issue_dependencies` webhook event is not a valid GitHub Actions trigger. This has to be done manually for now.
-
 ### Features
 
 - ♾️ Automations covering the full issue lifecycle
 - ⚡ Zero-config setup via org-level variables
 - 🔐 `GITHUB_TOKEN` is used for all automations (except adding issues to projects, which requires a PAT with project write scope)
 - 🧩 Composite actions can be used independently for custom workflows
+
+### Automations
+
+> [!NOTE]
+> Syncing the `Stage` field to `Blocked` when an issue dependency is created or removed is not currently supported because the `issue_dependencies` webhook event is not a valid GitHub Actions trigger. This has to be done manually for now.
+
+| Trigger                          | Action                             |
+| -------------------------------- | ---------------------------------- |
+| Issue assigned                   | Sets `Stage` to `🚧 in progress`   |
+| Issue unassigned (last assignee) | Sets `Stage` to `🟢 ready`         |
+| Issue closed                     | Clears `Stage`                     |
+| Issue opened                     | Adds issue to the `Global` project |
+| Effort and Priority fields set   | Sets `Stage` to `🟢 ready`         |
 
 ### Assumptions
 
@@ -50,16 +60,6 @@ The automation assumes new issues should be added to an org project, not just up
 #### Compatibility
 
 The reusable workflow depends on org-level variables, so your organization needs to support them in the repositories where the workflow runs. Free organizations may be limited to public repositories, while paid organizations can use the same setup in private repositories.
-
-### Automations
-
-| Trigger                          | Action                           |
-| -------------------------------- | -------------------------------- |
-| Issue assigned                   | Sets `Stage` to `🚧 in progress` |
-| Issue unassigned (last assignee) | Sets `Stage` to `🟢 ready`       |
-| Issue closed                     | Clears `Stage`                   |
-| Issue opened                     | Adds issue to the `Global` project |
-| Effort and Priority fields set   | Sets `Stage` to `🟢 ready`       |
 
 ## 📦 Installation
 
