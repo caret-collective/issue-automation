@@ -21,7 +21,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: caret-collective/issue-automation/on-issue-assigned@main
+      - uses: $/on-issue-assigned
         with:
           stage_field_id: ${{ vars.STAGE_FIELD_ID }}
           stage_in_progress_value: ${{ vars.STAGE_IN_PROGRESS_VALUE }}
@@ -34,7 +34,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: caret-collective/issue-automation/on-issue-closed@main
+      - uses: $/on-issue-closed
         with:
           stage_field_id: ${{ vars.STAGE_FIELD_ID }}
 
@@ -46,7 +46,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: caret-collective/issue-automation/on-issue-unassigned@main
+      - uses: $/on-issue-unassigned
         with:
           stage_field_id: ${{ vars.STAGE_FIELD_ID }}
           stage_ready_value: ${{ vars.STAGE_READY_VALUE }}
@@ -61,7 +61,7 @@ jobs:
       # fail with a permission error. See the README for setup instructions.
       GH_TOKEN: ${{ secrets.project_token || github.token }}
     steps:
-      - uses: caret-collective/issue-automation/on-issue-opened@main
+      - uses: $/on-issue-opened
         with:
           project_number: ${{ vars.PROJECT_NUMBER }}
 
@@ -76,7 +76,7 @@ jobs:
     permissions:
       issues: write
     steps:
-      - uses: caret-collective/issue-automation/on-triage-complete@main
+      - uses: $/on-triage-complete
         with:
           effort_field_id: ${{ vars.EFFORT_FIELD_ID }}
           priority_field_id: ${{ vars.PRIORITY_FIELD_ID }}
