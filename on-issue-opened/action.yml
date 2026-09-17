@@ -12,10 +12,11 @@ runs:
       shell: bash
       env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
+        GITHUB_EVENT_ISSUE_HTML_URL: ${{ github.event.issue.html_url }}
       run: |
         echo "project_number: $PROJECT_NUMBER"
         echo "org: ${{ github.repository_owner }}"
-        echo "issue_url: ${{ github.event.issue.html_url }}"
+        echo "issue_url: ${GITHUB_EVENT_ISSUE_HTML_URL}"
         if [ "$GH_TOKEN" = "$GITHUB_TOKEN" ]; then
           echo "project_token: not configured (using GITHUB_TOKEN fallback — add ORG_PROJECT_TOKEN secret)"
         else
