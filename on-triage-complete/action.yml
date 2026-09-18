@@ -29,6 +29,8 @@ runs:
         STAGE_FIELD_ID: ${{ inputs.stage_field_id }}
         VALUE: ${{ inputs.stage_ready_value }}
         FIELD_VALUES: ${{ toJSON(github.event.issue.issue_field_values) }}
+        GITHUB_EVENT_ISSUE_FIELD_ID: ${{ github.event.issue_field.id }}
+        GITHUB_EVENT_ISSUE_FIELD_NAME: ${{ github.event.issue_field.name }}
       run: |
         echo "effort_field_id: $EFFORT_FIELD_ID"
         echo "priority_field_id: $PRIORITY_FIELD_ID"
@@ -36,8 +38,8 @@ runs:
         echo "stage_ready_value: $VALUE"
         echo "repository: ${{ github.repository }}"
         echo "issue_number: ${{ github.event.issue.number }}"
-        echo "changed_field_id: ${{ github.event.issue_field.id }}"
-        echo "changed_field_name: ${{ github.event.issue_field.name }}"
+        echo "changed_field_id: ${GITHUB_EVENT_ISSUE_FIELD_ID}"
+        echo "changed_field_name: ${GITHUB_EVENT_ISSUE_FIELD_NAME}"
         echo "issue_field_values_count: $(echo "${FIELD_VALUES:-null}" | jq '(. // []) | length')"
 
     - name: 'Triage complete → Set Stage to ${{ inputs.stage_ready_value }}'
